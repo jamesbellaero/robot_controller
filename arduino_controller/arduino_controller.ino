@@ -4,7 +4,7 @@ SoftwareSerial roboSerial = SoftwareSerial(10, 11);
 SoftwareSerial xbeeSerial = SoftwareSerial(12, 13);
 XBee xbee = XBee();
 Rx16Response rx16 = Rx16Response();
-
+int time;
 bool read = false;//past tense;
 void setup() {
   Serial.begin(9600);
@@ -13,6 +13,7 @@ void setup() {
   xbeeSerial.listen();
   roboSerial.listen();
   xbee.setSerial(xbeeSerial);
+  time=millis();
 }
 
 void loop() {
@@ -66,5 +67,10 @@ void loop() {
       xbee.send(tx);
     }
     
+  }
+  if(millis()-time>1000){
+    time=millis();
+    Tx16Request tx = Tx16Request(0xFFFD,"ping",4);
+    xbee.send(tx);
   }
 }
