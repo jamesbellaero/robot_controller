@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>robotcontroller</name>
+  <name>robot_controller</name>
   <version>0.1.0</version>
   <description>Subscribes to transforms and sends them to robit</description>
 

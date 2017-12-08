@@ -21,7 +21,7 @@ Vec3 att;
 xbee_dev_t xbee;
 xbee_serial_t serial_port;
 
-void sendMessage(char** toSend){
+void sendMessage(char* toSend){
   //uint8_t toSend[4*sizeof(float)];
   int loc=0;
   // memcpy(&toSend[sizeof(float)*loc++],&vx,sizeof(float));
@@ -29,7 +29,7 @@ void sendMessage(char** toSend){
   // memcpy(&toSend[sizeof(float)*loc++],&theta,sizeof(float));
   // memcpy(&toSend[sizeof(float)*loc++],&omega,sizeof(float));
   //xbee_frame_write(&xbee,NULL,0,toSend,16,0);
-
+  std::cout<<toSend;
   uint8_t checksum=1;
   for(int i=0;i<sizeof toSend;i++){
     checksum+=toSend[i];
@@ -102,7 +102,7 @@ void messageCallback( geometry_msgs::TransformStamped t){
 
   omega  = (float)(tarAtt.v[2]-att.v[2]);
 
-  sendMessage();
+  //sendMessage();
 
 }
 
@@ -128,10 +128,10 @@ int main(int argc, char **argv){
   while(ros::ok()){
     ros::Time start_ = ros::Time::now();
     //listen for updated position from vicon
-    char command[64];
-    printf( "Send a command");
-		fgets( command, sizeof command, stdin);
-    sendMessage(&command);
+    printf( "Send a command: ");
+    char dummy[64];
+		char* command=fgets( dummy, sizeof dummy, stdin);
+    sendMessage(command);
     //ros::spinOnce();
     //listen for info from omnibot until it's time to check for updates from vicon
     while(ros::Time::now()-start_<dur){
