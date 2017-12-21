@@ -4,15 +4,14 @@
 SoftwareSerial xbeeSerial = SoftwareSerial(12, 13);
 AltSoftSerial roboSerial;
 XBee xbee = XBee();
-AltSoftSerial altser;
 Rx16Response rx16 = Rx16Response();
 long time;
 bool read = false;//past tense;
 void setup() {
   Serial.begin(115200);
-  roboSerial.begin(9600);
+  roboSerial.begin(9600);//^RSBR 9
   xbeeSerial.begin(9600);
-  roboSerial.listen() ;
+  roboSerial.listen();
   xbee.setSerial(xbeeSerial);
   time=millis();
 }
@@ -38,22 +37,23 @@ void loop() {
 //    Serial.println();
 //    Serial.println(msg);
 //  }
-  
+  int cmdLen=0;
   xbee.readPacket();
   if (xbee.getResponse().isAvailable()) {
     read=true;
     uint8_t* data = xbee.getResponse().getFrameData();
     int len=xbee.getResponse().getFrameDataLength();
+    cmdLen=len-4;
     if(len>0){
       Serial.println(len);
       Serial.println("Received Frame");
       char command[len-4];
       for (int i=4;i<len;i++){//first 4 are frame id, 16 bit address, and option byte
-
         command[i-4]=data[i];
       }
       roboSerial.println(command);
       Serial.println(command);
+      
     }
   }
  // roboSerial.listen();
@@ -65,13 +65,17 @@ void loop() {
       dataString=roboSerial.readString();
     }
     if(dataString.length()>0){
-      Serial.println(dataString);
+      //note, if sending multiple commands then this may fail since the response to one could come back 
+      //before the response to the other. Would then need to separate by carriage return to determine 
+      //which command it was responding to.
+      Serial.println("Received response from robit");
+      Serial.println(dataString.substring(cmdLen));
       read=false;
       uint8_t data[dataString.length()];
-      for(int i=0;i<dataString.length();i++){
+      for(int i=cmdLen;i<dataString.length();i++){
         data[i]=dataString.charAt(i);
-        Serial.print(data[i],HEX);
-        Serial.print(' ');
+//        Serial.print(data[i],HEX);
+//        Serial.print(' ');
       }
       Serial.println();
       Tx16Request tx = Tx16Request(0xFFFD,data,dataString.length());
