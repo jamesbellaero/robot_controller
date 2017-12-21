@@ -30,14 +30,34 @@ void sendMessage(char* toSend){
   // memcpy(&toSend[sizeof(float)*loc++],&omega,sizeof(float));
   //xbee_frame_write(&xbee,NULL,0,toSend,16,0);
   std::cout<<toSend;
-  uint8_t checksum=1;
-  for(int i=0;i<sizeof toSend;i++){
+  uint16_t len=5+(strlen( toSend));//01,01,ff,fe,00,data
+  uint8_t msb=len>>8;
+  uint8_t lsb=len&255;
+  uint8_t header[7];
+  header[0]=0x7E;
+  header[1]=msb;
+  header[2]=lsb;
+  header[3]=0x01;//frame type
+  header[4]=0x01;//frame id
+  header[5]=0xFF;//16 bit address msb
+  header[6]=0xFE;//16 bit address lsb
+  header[7]=0x00;
+  uint8_t checksum=2;//frame type and id
+  for(int i=0;i<strlen( toSend);i++){
     checksum+=toSend[i];
   }
   checksum=(uint8_t)255-(uint8_t)(checksum+0xFF+0xFE);
-  xbee_ser_write( &serial_port, "\x7E\x00\x13\x01\xFF\xFE", 6);//FF FE are the 16 bit address, doesn't matter though
-  xbee_ser_write(&serial_port,toSend,sizeof toSend);
-  xbee_ser_write(&serial_port,&checksum,1);
+  uint8_t toWrite[9+(strlen( toSend))];
+  for(int i=0;i<9+(strlen( toSend));i++){
+    if(i<8)
+      toWrite[i]=header[i];
+    else if(i<8+(strlen( toSend)))
+      toWrite[i]=toSend[i-8];
+    else
+      toWrite[(sizeof toWrite)-1]=checksum;
+  }
+
+  xbee_ser_write( &serial_port,toWrite,sizeof toWrite);
   // for(int i = 0;i<4;i++){
   //   std::cout<<*((float*)&toSend[i*4])<<"\n";
   // }
@@ -130,7 +150,14 @@ int main(int argc, char **argv){
     //listen for updated position from vicon
     printf( "Send a command: ");
     char dummy[64];
-		char* command=fgets( dummy, sizeof dummy, stdin);
+		fgets( dummy, sizeof dummy, stdin);
+    int index=0;
+    while(dummy[index]>0){
+
+      index++;}
+    std::cout<<index<<'\n';
+    char command[index-1];
+    memcpy(command,&dummy[0],sizeof command);
     sendMessage(command);
     //ros::spinOnce();
     //listen for info from omnibot until it's time to check for updates from vicon
